@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">SciChartDemo</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="candlestick">CandleStick</string>
+    <string name="candlesticks">CandleSticks</string>
+    <string name="linetxt">Line</string>
+    <string name="bar">Bar</string>
+    <string name="heikin_ashi">Heikin Ashi</string>
+</resources>
