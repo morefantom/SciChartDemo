@@ -1,91 +1,52 @@
 package com.adrosonic.adrocafe.scichartdemo
 
-import androidx.databinding.DataBindingUtil
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import com.adrosonic.adrocafe.scichartdemo.databinding.ActivityMainBinding
 import com.scichart.charting.model.dataSeries.OhlcDataSeries
 import com.scichart.charting.model.dataSeries.XyDataSeries
 import com.scichart.charting.visuals.SciChartSurface
+import com.scichart.charting.visuals.annotations.LineAnnotation
+import com.scichart.charting.visuals.axes.AutoRange
+import com.scichart.charting.visuals.renderableSeries.data.OhlcRenderPassData
+import com.scichart.core.framework.UpdateSuspender
+import com.scichart.drawing.common.SolidPenStyle
 import com.scichart.drawing.utility.ColorUtil
 import com.scichart.extensions.builders.SciChartBuilder
-import java.util.*
-import com.scichart.charting.visuals.axes.AutoRange
-import com.scichart.charting.visuals.renderableSeries.paletteProviders.IPaletteProvider
-import com.scichart.core.framework.UpdateSuspender
 import org.json.JSONArray
 import java.io.InputStream
 import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
+    private var binding: ActivityMainBinding? = null
+    private var sciChartBuilder: SciChartBuilder? = null
+
+    private var ohlcList = listOf<Ohlc>()
+
+    private var ohlcDataSeries =  OhlcDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
+    private var lineXYDataSeries = XyDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
+    private var barXYDataSeries = XyDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
+    private var heikinDataSeries = OhlcDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        var ohlcList = readJSONFromAsset()
-
-        val sciChartSurfaceCandleStick = SciChartSurface(this)
-        val sciChartSurfaceLine = SciChartSurface(this)
-        val sciChartSurfaceBar = SciChartSurface(this)
-        val sciChartSurfaceHeikinAshi = SciChartSurface(this)
-
-        binding.llScichartCandlestick.addView(sciChartSurfaceCandleStick)
-        binding.llScichartLine.addView(sciChartSurfaceLine)
-        binding.llScichartBar.addView(sciChartSurfaceBar)
-        binding.llScichartHeikin.addView(sciChartSurfaceHeikinAshi)
-
+        ohlcList = readJSONFromAsset()
         SciChartBuilder.init(this)
-        val sciChartBuilder = SciChartBuilder.instance()
+        sciChartBuilder = SciChartBuilder.instance()
 
-        val xAxis_cs = sciChartBuilder.newCategoryDateAxis()
-            .withVisibleRange(ohlcList.size.toDouble() - 30, ohlcList.size.toDouble())
-            .withGrowBy(0.0, 0.1)
-            .build()
-
-        val xAxis_l = sciChartBuilder.newCategoryDateAxis()
-            .withVisibleRange(ohlcList.size.toDouble() - 30, ohlcList.size.toDouble())
-            .withGrowBy(0.0, 0.1)
-            .build()
-
-        val xAxis_b = sciChartBuilder.newCategoryDateAxis()
-            .withVisibleRange(ohlcList.size.toDouble() - 30, ohlcList.size.toDouble())
-            .withGrowBy(0.0, 0.1)
-            .build()
-
-        val xAxis_ha = sciChartBuilder.newCategoryDateAxis()
-            .withVisibleRange(ohlcList.size.toDouble() - 30, ohlcList.size.toDouble())
-            .withGrowBy(0.0, 0.1)
-            .build()
-
-        val yAxis_cs = sciChartBuilder.newNumericAxis()
-            .withGrowBy(0.0, 0.1)
-            .withAutoRangeMode(AutoRange.Always)
-            .build()
-
-        val yAxis_l = sciChartBuilder.newNumericAxis()
-            .withGrowBy(0.0, 0.1)
-            .withAutoRangeMode(AutoRange.Always)
-            .build()
-
-        val yAxis_b = sciChartBuilder.newNumericAxis()
-            .withGrowBy(0.0, 0.1)
-            .withAutoRangeMode(AutoRange.Always)
-            .build()
-
-        val yAxis_ha = sciChartBuilder.newNumericAxis()
-            .withGrowBy(0.0, 0.1)
-            .withAutoRangeMode(AutoRange.Always)
-            .build()
-
-        var ohlcDataSeries =  OhlcDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
-        var lineXYDataSeries = XyDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
-        var barXYDataSeries = XyDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
-        var heikinDataSeries = OhlcDataSeries(Date::class.javaObjectType, Double::class.javaObjectType)
+        val sciChartSurfaceHeikinAshi = SciChartSurface(this)
+        val sciChartSurfaceBar = SciChartSurface(this)
+        val sciChartSurfaceLine = SciChartSurface(this)
+        val sciChartSurfaceCandleStick = SciChartSurface(this)
+        val sciChartSurfaceLineAnnotation = SciChartSurface(this)
 
         var prevOpen = 0.0
 
@@ -114,114 +75,128 @@ class MainActivity : AppCompatActivity() {
             prevOpen = (ohlc.open + ohlc.close)/2
         }
 
-        val candlestickSeries = sciChartBuilder.newCandlestickSeries()
-            .withStrokeUp(ColorUtil.DarkGreen)
-            .withFillUpColor(ColorUtil.Green)
-            .withStrokeDown(ColorUtil.DarkRed)
-            .withFillDownColor(ColorUtil.Red)
-            .withDataSeries(ohlcDataSeries)
-            .build()
-
-        val fastLineRenderableSeries = sciChartBuilder.newLineSeries()
-            .withDataSeries(lineXYDataSeries)
-            .withStrokeStyle(ColorUtil.DarkGreen, 1f, true)
-            .build()
-
-        val fastColumnRenderableSeries = sciChartBuilder.newColumnSeries()
-            .withStrokeStyle(ColorUtil.LightBlue, 1f)
-            .withDataPointWidth(0.5)
-            .withLinearGradientColors(ColorUtil.LightSteelBlue, ColorUtil.SteelBlue)
-            .withDataSeries(barXYDataSeries)
-            .build()
-
-        val heikinashiSeries = sciChartBuilder.newCandlestickSeries()
-            .withStrokeUp(ColorUtil.DarkGreen)
-            .withFillUpColor(ColorUtil.Green)
-            .withStrokeDown(ColorUtil.DarkRed)
-            .withFillDownColor(ColorUtil.Red)
-            .withDataSeries(heikinDataSeries)
-            .build()
-
-//        val additionalModifiers = sciChartBuilder.newModifierGroup()
-//            .withPinchZoomModifier().build()
-//            .withZoomPanModifier().withReceiveHandledEvents(true).build()
-//            .withZoomExtentsModifier().withReceiveHandledEvents(true).build()
-//            .withXAxisDragModifier().withReceiveHandledEvents(true).withDragMode(AxisDragModifierBase.AxisDragMode.Scale).withClipModex(ClipMode.None).build()
-//            .withYAxisDragModifier().withReceiveHandledEvents(true).withDragMode(AxisDragModifierBase.AxisDragMode.Pan).build()
-//            .build()
-
-        UpdateSuspender.using(sciChartSurfaceCandleStick) {
-            //candlestick
-            Collections.addAll(sciChartSurfaceCandleStick.yAxes, yAxis_cs)
-            Collections.addAll(sciChartSurfaceCandleStick.xAxes, xAxis_cs)
-            Collections.addAll(sciChartSurfaceCandleStick.renderableSeries, candlestickSeries)
-            Collections.addAll(sciChartSurfaceCandleStick.chartModifiers, sciChartBuilder.newModifierGroupWithDefaultModifiers().build())
-            //line
-            Collections.addAll(sciChartSurfaceLine.yAxes, yAxis_l)
-            Collections.addAll(sciChartSurfaceLine.xAxes, xAxis_l)
-            Collections.addAll(sciChartSurfaceLine.renderableSeries, fastLineRenderableSeries)
-            Collections.addAll(sciChartSurfaceLine.chartModifiers, sciChartBuilder.newModifierGroupWithDefaultModifiers().build())
-            //bar
-            Collections.addAll(sciChartSurfaceBar.yAxes, yAxis_b)
-            Collections.addAll(sciChartSurfaceBar.xAxes, xAxis_b)
-            Collections.addAll(sciChartSurfaceBar.renderableSeries, fastColumnRenderableSeries)
-            Collections.addAll(sciChartSurfaceBar.chartModifiers, sciChartBuilder.newModifierGroupWithDefaultModifiers().build())
-            //heikin ashi
-            Collections.addAll(sciChartSurfaceHeikinAshi.yAxes, yAxis_ha)
-            Collections.addAll(sciChartSurfaceHeikinAshi.xAxes, xAxis_ha)
-            Collections.addAll(sciChartSurfaceHeikinAshi.renderableSeries, heikinashiSeries)
-            Collections.addAll(sciChartSurfaceHeikinAshi.chartModifiers, sciChartBuilder.newModifierGroupWithDefaultModifiers().build())
-        }
-
-//        Collections.addAll(sciChartSurface.annotations, textAnnotation)
-//        Collections.addAll(sciChartSurface.chartModifiers, additionalModifiers)
-
-//        var lineData = sciChartBuilder.newXyDataSeries(Int::class.javaObjectType, Double::class.javaObjectType).build()
-//        var scatterData = sciChartBuilder.newXyDataSeries(Int::class.javaObjectType, Double::class.javaObjectType).build()
-
-//        for (i: Int in 0..10){
-//            lineData.append(i, Math.sin(i*0.1))
-//            scatterData.append(i, Math.cos(i*0.1))
-//        }
-
-//        val lineSeries = sciChartBuilder.newLineSeries()
-//            .withDataSeries(lineData)
-//            .withStrokeStyle(ColorUtil.LightBlue, 2f, true)
-//            .build()
-//
-//        val pointMarker = sciChartBuilder.newPointMarker(EllipsePointMarker())
-//            .withFill(ColorUtil.LightBlue)
-//            .withStroke(ColorUtil.Green, 2f)
-//            .withSize(10)
-//            .build()
-//
-//        val scatterSeries = sciChartBuilder.newScatterSeries()
-//            .withDataSeries(scatterData)
-//            .withPointMarker(pointMarker)
-//            .build()
-
-//        sciChartSurface.renderableSeries.add(scatterSeries)
-//        sciChartSurface.renderableSeries.add(lineSeries)
-//        sciChartSurface.zoomExtents()
-
-//        val legendModifier = sciChartBuilder.newModifierGroup()
-//            .withLegendModifier()
-//            .withOrientation(Orientation.HORIZONTAL)
-//            .withPosition(Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM, 10)
-//            .build()
-//            .build()
-
-//        sciChartSurface.chartModifiers.add(legendModifier)
-
-//        val cursorModifier = sciChartBuilder.newModifierGroup()
-//            .withCursorModifier().withShowTooltip(true).build()
-//            .build()
-//
-//        sciChartSurface.chartModifiers.add(cursorModifier)
+        build(sciChartSurfaceCandleStick, sciChartSurfaceLine,
+            sciChartSurfaceBar, sciChartSurfaceHeikinAshi, sciChartSurfaceLineAnnotation)
 
     }
 
-    fun readJSONFromAsset(): List<Ohlc>{
+    private fun build(sciChartSurfaceCandleStick: SciChartSurface, sciChartSurfaceLine: SciChartSurface,
+                      sciChartSurfaceBar: SciChartSurface, sciChartSurfaceHeikinAshi: SciChartSurface,
+                      sciChartSurfaceLineAnnotation: SciChartSurface
+    ) {
+        buildCandleStick(sciChartSurfaceCandleStick)
+        buildLine(sciChartSurfaceLine)
+        buildBar(sciChartSurfaceBar)
+        buildHeikenAshi(sciChartSurfaceHeikinAshi)
+        buildLineAnnotation(sciChartSurfaceLineAnnotation)
+    }
+
+    private fun buildCandleStick(sciChartSurfaceCandleStick: SciChartSurface) {
+        binding?.llScichartCandlestick?.addView(sciChartSurfaceCandleStick)
+        val xAxis_cs = sciChartBuilder?.buildDateAxis()
+        val yAxis_cs = sciChartBuilder?.buildNumericAxis()
+
+        val candlestickSeries = sciChartBuilder?.newCandlestickSeries()
+            ?.withStrokeUp(ColorUtil.DarkGreen)
+            ?.withFillUpColor(ColorUtil.Green)
+            ?.withStrokeDown(ColorUtil.DarkRed)
+            ?.withFillDownColor(ColorUtil.Red)
+            ?.withDataSeries(ohlcDataSeries)
+            ?.build()
+
+        //listener which will print hello if there's no data on the screen
+        xAxis_cs?.setVisibleRangeChangeListener { iAxisCore, iRange, iRange2, b ->
+
+            val size = (candlestickSeries?.currentRenderPassData as OhlcRenderPassData).indices.size()
+            if (size == 0) {
+                Log.i("hello", "hello")
+            }
+        }
+
+        UpdateSuspender.using(sciChartSurfaceCandleStick) {
+            Collections.addAll(sciChartSurfaceCandleStick.yAxes, yAxis_cs)
+            Collections.addAll(sciChartSurfaceCandleStick.xAxes, xAxis_cs)
+            Collections.addAll(sciChartSurfaceCandleStick.renderableSeries, candlestickSeries)
+            Collections.addAll(sciChartSurfaceCandleStick.chartModifiers, sciChartBuilder?.newModifierGroupWithDefaultModifiers()?.build())
+        }
+    }
+
+    private fun buildLine(sciChartSurfaceLine: SciChartSurface) {
+        binding?.llScichartLine?.addView(sciChartSurfaceLine)
+
+        val xAxis_l = sciChartBuilder?.buildDateAxis()
+        val yAxis_l = sciChartBuilder?.buildNumericAxis()
+        val fastLineRenderableSeries = sciChartBuilder?.newLineSeries()
+            ?.withDataSeries(lineXYDataSeries)
+            ?.withStrokeStyle(ColorUtil.DarkGreen, 1f, true)
+            ?.build()
+        UpdateSuspender.using(sciChartSurfaceLine) {
+            Collections.addAll(sciChartSurfaceLine.yAxes, yAxis_l)
+            Collections.addAll(sciChartSurfaceLine.xAxes, xAxis_l)
+            Collections.addAll(sciChartSurfaceLine.renderableSeries, fastLineRenderableSeries)
+            Collections.addAll(sciChartSurfaceLine.chartModifiers, sciChartBuilder?.newModifierGroupWithDefaultModifiers()?.build())
+        }
+    }
+
+    private fun buildBar(sciChartSurfaceBar: SciChartSurface) {
+        binding?.llScichartBar?.addView(sciChartSurfaceBar)
+
+        val xAxis_b = sciChartBuilder?.buildDateAxis()
+        val yAxis_b = sciChartBuilder?.buildNumericAxis()
+        val fastColumnRenderableSeries = sciChartBuilder?.newColumnSeries()
+            ?.withStrokeStyle(ColorUtil.LightBlue, 1f)
+            ?.withDataPointWidth(0.5)
+            ?.withLinearGradientColors(ColorUtil.LightSteelBlue, ColorUtil.SteelBlue)
+            ?.withDataSeries(barXYDataSeries)
+            ?.build()
+        UpdateSuspender.using(sciChartSurfaceBar) {
+            Collections.addAll(sciChartSurfaceBar.yAxes, yAxis_b)
+            Collections.addAll(sciChartSurfaceBar.xAxes, xAxis_b)
+            Collections.addAll(sciChartSurfaceBar.renderableSeries, fastColumnRenderableSeries)
+            Collections.addAll(sciChartSurfaceBar.chartModifiers, sciChartBuilder?.newModifierGroupWithDefaultModifiers()?.build())
+        }
+    }
+
+    private fun buildHeikenAshi(sciChartSurfaceHeikinAshi: SciChartSurface) {
+        binding?.llScichartHeikin?.addView(sciChartSurfaceHeikinAshi)
+        val xAxis_ha = sciChartBuilder?.buildDateAxis()
+        val yAxis_ha = sciChartBuilder?.buildNumericAxis()
+        val heikinashiSeries = sciChartBuilder?.newCandlestickSeries()
+            ?.withStrokeUp(ColorUtil.DarkGreen)
+            ?.withFillUpColor(ColorUtil.Green)
+            ?.withStrokeDown(ColorUtil.DarkRed)
+            ?.withFillDownColor(ColorUtil.Red)
+            ?.withDataSeries(heikinDataSeries)
+            ?.build()
+        UpdateSuspender.using(sciChartSurfaceHeikinAshi) {
+            Collections.addAll(sciChartSurfaceHeikinAshi.yAxes, yAxis_ha)
+            Collections.addAll(sciChartSurfaceHeikinAshi.xAxes, xAxis_ha)
+            Collections.addAll(sciChartSurfaceHeikinAshi.renderableSeries, heikinashiSeries)
+            Collections.addAll(sciChartSurfaceHeikinAshi.chartModifiers, sciChartBuilder?.newModifierGroupWithDefaultModifiers()?.build())
+        }
+    }
+
+    private fun buildLineAnnotation(sciChartSurfaceLineAnnotation: SciChartSurface) {
+        binding?.llScichartLnAnt?.addView(sciChartSurfaceLineAnnotation)
+        val xAxis_lant = sciChartBuilder?.buildNumericAxis()
+        val yAxis_lant = sciChartBuilder?.buildNumericAxis()
+        var lineAnnotation = LineAnnotation(this)
+        lineAnnotation.stroke = SolidPenStyle(-0xffff01, true, 4f, null)
+        lineAnnotation.isEditable = true;
+        lineAnnotation.x1 = 1.0
+        lineAnnotation.y1 = 4.6
+        lineAnnotation.x2 = 10.0
+        lineAnnotation.y2 = 9.1
+
+        UpdateSuspender.using(sciChartSurfaceLineAnnotation) {
+            Collections.addAll(sciChartSurfaceLineAnnotation.yAxes, yAxis_lant)
+            Collections.addAll(sciChartSurfaceLineAnnotation.xAxes, xAxis_lant)
+            Collections.addAll(sciChartSurfaceLineAnnotation.annotations, lineAnnotation)
+            Collections.addAll(sciChartSurfaceLineAnnotation.chartModifiers, sciChartBuilder?.newModifierGroupWithDefaultModifiers()?.build())
+        }
+    }
+
+    private fun readJSONFromAsset(): List<Ohlc>{
         var json: String ?= null
         var ohlcList: MutableList<Ohlc>  = mutableListOf()
         try {
@@ -246,4 +221,14 @@ class MainActivity : AppCompatActivity() {
         }
         return ohlcList
     }
+
+    private fun SciChartBuilder.buildDateAxis()  = this.newCategoryDateAxis()
+        .withVisibleRange(ohlcList.size.toDouble() - 30, ohlcList.size.toDouble())
+        .withGrowBy(0.0, 0.1)
+        .build()
+
+    private fun SciChartBuilder.buildNumericAxis() = this.newNumericAxis()
+        .withGrowBy(0.0, 0.1)
+        .withAutoRangeMode(AutoRange.Always)
+        .build()
 }

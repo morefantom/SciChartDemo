@@ -8,4 +8,5 @@
     <string name="linetxt">Line</string>
     <string name="bar">Bar</string>
     <string name="heikin_ashi">Heikin Ashi</string>
+    <string name="line_annotation">Line Annotation</string>
 </resources>
