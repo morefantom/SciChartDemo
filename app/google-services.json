@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "96357786877",
+    "firebase_url": "https://scichartdemo.firebaseio.com",
+    "project_id": "scichartdemo",
+    "storage_bucket": "scichartdemo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96357786877:android:289bb2d35b1676b1b94a94",
+        "android_client_info": {
+          "package_name": "com.adrosonic.adrocafe.scichartdemo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "96357786877-52b1m72a6ep243pjq13skignvohgsog5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCScMJijukAp6PjxAooyGndL_-WSaK8T-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "96357786877-52b1m72a6ep243pjq13skignvohgsog5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -106,7 +106,6 @@ class MainActivity : AppCompatActivity() {
 
         //listener which will print hello if there's no data on the screen
         xAxis_cs?.setVisibleRangeChangeListener { iAxisCore, iRange, iRange2, b ->
-
             val size = (candlestickSeries?.currentRenderPassData as OhlcRenderPassData).indices.size()
             if (size == 0) {
                 Log.i("hello", "hello")
@@ -182,7 +181,7 @@ class MainActivity : AppCompatActivity() {
         val yAxis_lant = sciChartBuilder?.buildNumericAxis()
         var lineAnnotation = LineAnnotation(this)
         lineAnnotation.stroke = SolidPenStyle(-0xffff01, true, 4f, null)
-        lineAnnotation.isEditable = true;
+        lineAnnotation.setIsEditable(true)
         lineAnnotation.x1 = 1.0
         lineAnnotation.y1 = 4.6
         lineAnnotation.x2 = 10.0
@@ -200,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         var json: String ?= null
         var ohlcList: MutableList<Ohlc>  = mutableListOf()
         try {
-            val inputStream: InputStream  =assets.open("tohlcv.json")
+            val inputStream: InputStream  =assets.open("json/tohlcv.json")
             json = inputStream.bufferedReader().use {
                 it.readText()
             }
